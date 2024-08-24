@@ -1,5 +1,5 @@
-import { ContactShadows, Environment, Image, MeshReflectorMaterial, OrbitControls, useCursor } from '@react-three/drei'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Environment, Image, MeshReflectorMaterial, OrbitControls, useCursor, useGLTF } from '@react-three/drei'
+import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import axios from 'axios'
 import { easing } from 'maath'
 import { useEffect, useRef, useState } from 'react'
@@ -24,16 +24,16 @@ export const Gallery = () => {
       .then((response) => {
         const positions = [
           // Back
-          { position: [-0.8, 0, -0.6], rotation: [0, 0, 0] },
-          { position: [0.8, 0, -0.6], rotation: [0, 0, 0] },
+          { position: [-2, 0.6, -4.7], rotation: [0, 0, 0] },
+          { position: [2.5, 0.6, -4.7], rotation: [0, 0, 0] },
           // Left
-          { position: [-1.75, 0, 0.25], rotation: [0, Math.PI / 2.5, 0] },
-          { position: [-2.15, 0, 1.5], rotation: [0, Math.PI / 2.5, 0] },
-          { position: [-2.45, 0, 2.75], rotation: [0, Math.PI / 2.5, 0] },
+          { position: [-5.15, 0.6, -3], rotation: [0, Math.PI / 2, 0] },
+          { position: [-5.15, 0.6, -1.5], rotation: [0, Math.PI / 2, 0] },
+          { position: [-5.15, 0.6, 0], rotation: [0, Math.PI / 2, 0] },
           // Right
-          { position: [1.75, 0, 0.25], rotation: [0, -Math.PI / 2.5, 0] },
-          { position: [2.15, 0, 1.5], rotation: [0, -Math.PI / 2.5, 0] },
-          { position: [2.45, 0, 2.75], rotation: [0, -Math.PI / 2.5, 0] }
+          { position: [5.75, 0.6, -3], rotation: [0, -Math.PI / 2, 0] },
+          { position: [5.75, 0.6, -1.5], rotation: [0, -Math.PI / 2, 0] },
+          { position: [5.75, 0.6, 0], rotation: [0, -Math.PI / 2, 0] }
         ]
 
         const imagesWithPositions = response.data.gallery.map((image, index) => ({
@@ -52,12 +52,13 @@ export const Gallery = () => {
   }, [])
 
   return (
-    <Canvas dpr={[1, 1.5]} camera={{ fov: 70, position: [0, 2, 15] }}>
+    <Canvas dpr={[1, 1.5]} camera={{ fov: 60, position: [0, 0, 10] }}>
       <color attach="background" args={['#191920']} />
       <fog attach="fog" args={['#191920', 0, 15]} />
       <group position={[0, -0.5, 0]}>
         <Frames images={images} ratio={ratio} setRatio={setRatio} setControlsEnabled={setControlsEnabled} controlsEnabled={controlsEnabled} />
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          {/* floor */}
           <planeGeometry args={[50, 50]} />
           <MeshReflectorMaterial
             blur={[300, 100]}
@@ -71,6 +72,26 @@ export const Gallery = () => {
             color="#050505"
             metalness={0.5}
           />
+        </mesh>
+
+        {/* walls */}
+        <mesh position={[0, 2.5, -5]}>
+          <boxGeometry args={[20, 5, 0.5]} />
+          <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
+        </mesh>
+        <mesh position={[-7, 2, 0]} rotation={[0, Math.PI / 2, 0]}>
+          <boxGeometry args={[20, 5, 3.5]} />
+          <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
+        </mesh>
+        <mesh position={[6, 2.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
+          <boxGeometry args={[20, 5, 0.5]} />
+          <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
+        </mesh>
+
+        {/* roof */}
+        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
+          <planeGeometry args={[20, 20]} />
+          <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
         </mesh>
       </group>
       <Environment preset="city" />
@@ -101,8 +122,8 @@ function Frames({ images, ratio, setRatio, q = new THREE.Quaternion(), p = new T
 
   useFrame((state, dt) => {
     // if (!controlsEnabled) {
-    easing.damp3(state.camera.position, p, 0.4, dt)
-    easing.dampQ(state.camera.quaternion, q, 0.4, dt)
+    easing.damp3(state.camera.position, p, 0.5, dt)
+    easing.dampQ(state.camera.quaternion, q, 0.5, dt)
     // }
   })
 
@@ -114,16 +135,20 @@ function Frames({ images, ratio, setRatio, q = new THREE.Quaternion(), p = new T
         setLocation(clicked.current === e.object ? '/' : '/item/' + e.object.name)
       }}
       onPointerMissed={() => setLocation('/')}>
-      {images.map((props) => (
-        <Frame key={props.url} ratio={ratio} {...props} />
-      ))}
+      {images.map((props, index) => {
+        const customRatio = index < 2 ? 1.7 : ratio
+        const customWidth = index < 2 ? 3.3 : 1
+        return <Frame key={props.url} ratio={customRatio} scaleX={customWidth} {...props} />
+      })}
     </group>
   )
 }
 
-function Frame({ url, ratio, setRatio, c = new THREE.Color(), ...props }) {
+function Frame({ url, ratio, setRatio, scaleX, c = new THREE.Color(), ...props }) {
+  const { nodes, materials } = useGLTF('./assets/spotlight.gltf')
   const image = useRef()
   const frame = useRef()
+  const light = useRef()
   const [, params] = useRoute('/item/:id')
   const [hovered, hover] = useState(false)
   const [rnd] = useState(() => Math.random())
@@ -132,9 +157,17 @@ function Frame({ url, ratio, setRatio, c = new THREE.Color(), ...props }) {
   useCursor(hovered)
   useFrame((state, dt) => {
     image.current.material.zoom = 2 + Math.sin(rnd * 10000 + state.clock.elapsedTime / 3) / 2
-    easing.damp3(image.current.scale, [0.85 * (!isActive && hovered ? 1.06 : 1), 0.9 * (!isActive && hovered ? 1.06 : 1), 1], 0.1, dt)
+    easing.damp3(image.current.scale, [0.88 * (!isActive && hovered ? 1.06 : 1), 0.9 * (!isActive && hovered ? 1.06 : 1), 1], 0.1, dt)
     easing.dampC(frame.current.material.color, hovered ? '#f1f1f1' : 'white', 0.1, dt)
   })
+
+  useEffect(() => {
+    if (light.current && image.current) {
+      light.current.target = image.current
+      light.current.target.updateMatrixWorld()
+      light.current.updateMatrixWorld()
+    }
+  }, [image.current])
 
   return (
     <group {...props}>
@@ -142,9 +175,20 @@ function Frame({ url, ratio, setRatio, c = new THREE.Color(), ...props }) {
         name={name}
         onPointerOver={(e) => (e.stopPropagation(), hover(true))}
         onPointerOut={() => hover(false)}
-        scale={[1, ratio, 0.05]}
+        scale={[scaleX, ratio, 0.05]}
         position={[0, ratio / 2, 0]}>
         <boxGeometry />
+
+        {scaleX > 1 ? (
+          <>
+            <boxGeometry args={[0.94, 1, 1]} />
+          </>
+        ) : (
+          <>
+            <boxGeometry args={[1, 1, 1]} />
+          </>
+        )}
+
         <meshStandardMaterial color="#999" metalness={0.5} roughness={0.5} envMapIntensity={2} />
         <mesh ref={frame} raycast={() => null} scale={[0.9, 0.93, 0.9]} position={[0, 0, 0.2]}>
           <boxGeometry />
@@ -152,6 +196,19 @@ function Frame({ url, ratio, setRatio, c = new THREE.Color(), ...props }) {
         </mesh>
         <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={url} />
       </mesh>
+
+      <spotLight
+        ref={light}
+        position={[0, ratio / 2 + 1, 1]}
+        angle={Math.PI / 4}
+        penumbra={0.2}
+        intensity={5}
+        distance={5}
+        decay={1}
+        castShadow
+        target={image.current}></spotLight>
+
+      <primitive object={nodes.Spotlight} position={[-4, 2.4, 10]} scale={[0.01, 0.01, 0.01]} />
     </group>
   )
 }
