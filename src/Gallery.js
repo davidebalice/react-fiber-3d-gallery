@@ -1,4 +1,4 @@
-import { Environment, Image, MeshReflectorMaterial, OrbitControls, useCursor, useGLTF } from '@react-three/drei'
+import { Environment, Image, MeshReflectorMaterial, OrbitControls, useCursor, useProgress } from '@react-three/drei'
 import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import axios from 'axios'
 import { easing } from 'maath'
@@ -6,12 +6,29 @@ import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import getUuid from 'uuid-by-string'
 import { useLocation, useRoute } from 'wouter'
+import { Overlay } from './Overlay'
+import Preloader from './Preloader'
+import {Spotlight} from './Spotlight'
+import {Walls} from './Walls'
 
 export const Gallery = () => {
+  const [loading, setLoading] = useState(true)
   const [images, setImages] = useState([])
   const [controlsEnabled, setControlsEnabled] = useState(true)
   const [ratio, setRatio] = useState(1.61803398875)
   const getImage = (photo) => `${process.env.REACT_APP_BACKEND_URL}/api/images/thumb/${photo}`
+
+  useEffect(() => {
+    setLoading(true)
+  }, [])
+
+  const { progress } = useProgress()
+
+  useEffect(() => {
+    if (progress === 100) {
+      setLoading(false)
+    }
+  }, [progress])
 
   const fetchImages = () => {
     axios
@@ -52,51 +69,20 @@ export const Gallery = () => {
   }, [])
 
   return (
-    <Canvas dpr={[1, 1.5]} camera={{ fov: 60, position: [0, 0, 10] }}>
-      <color attach="background" args={['#191920']} />
-      <fog attach="fog" args={['#191920', 0, 15]} />
-      <group position={[0, -0.5, 0]}>
-        <Frames images={images} ratio={ratio} setRatio={setRatio} setControlsEnabled={setControlsEnabled} controlsEnabled={controlsEnabled} />
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          {/* floor */}
-          <planeGeometry args={[50, 50]} />
-          <MeshReflectorMaterial
-            blur={[300, 100]}
-            resolution={2048}
-            mixBlur={1}
-            mixStrength={80}
-            roughness={1}
-            depthScale={1.2}
-            minDepthThreshold={0.4}
-            maxDepthThreshold={1.4}
-            color="#050505"
-            metalness={0.5}
-          />
-        </mesh>
-
-        {/* walls */}
-        <mesh position={[0, 2.5, -5]}>
-          <boxGeometry args={[20, 5, 0.5]} />
-          <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
-        </mesh>
-        <mesh position={[-7, 2, 0]} rotation={[0, Math.PI / 2, 0]}>
-          <boxGeometry args={[20, 5, 3.5]} />
-          <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
-        </mesh>
-        <mesh position={[6, 2.5, 0]} rotation={[0, -Math.PI / 2, 0]}>
-          <boxGeometry args={[20, 5, 0.5]} />
-          <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
-        </mesh>
-
-        {/* roof */}
-        <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
-          <planeGeometry args={[20, 20]} />
-          <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
-        </mesh>
-      </group>
-      <Environment preset="city" />
-      {controlsEnabled && <OrbitControls />}
-    </Canvas>
+    <>
+      {loading && <Preloader />}
+      <Overlay />
+      <Canvas dpr={[1, 1.5]} camera={{ fov: 60, position: [0, 0, 10] }}>
+        <color attach="background" args={['#191920']} />
+        <fog attach="fog" args={['#191920', 0, 15]} />
+        <group position={[0, -0.5, 0]}>
+          <Frames images={images} ratio={ratio} setRatio={setRatio} setControlsEnabled={setControlsEnabled} controlsEnabled={controlsEnabled} />
+          <Walls/>
+        </group>
+        <Environment preset="city" />
+        {controlsEnabled && <OrbitControls />}
+      </Canvas>
+    </>
   )
 }
 
@@ -145,7 +131,6 @@ function Frames({ images, ratio, setRatio, q = new THREE.Quaternion(), p = new T
 }
 
 function Frame({ url, ratio, setRatio, scaleX, c = new THREE.Color(), ...props }) {
-  const { nodes, materials } = useGLTF('./assets/spotlight.gltf')
   const image = useRef()
   const frame = useRef()
   const light = useRef()
@@ -170,45 +155,47 @@ function Frame({ url, ratio, setRatio, scaleX, c = new THREE.Color(), ...props }
   }, [image.current])
 
   return (
-    <group {...props}>
-      <mesh
-        name={name}
-        onPointerOver={(e) => (e.stopPropagation(), hover(true))}
-        onPointerOut={() => hover(false)}
-        scale={[scaleX, ratio, 0.05]}
-        position={[0, ratio / 2, 0]}>
-        <boxGeometry />
-
-        {scaleX > 1 ? (
-          <>
-            <boxGeometry args={[0.94, 1, 1]} />
-          </>
-        ) : (
-          <>
-            <boxGeometry args={[1, 1, 1]} />
-          </>
-        )}
-
-        <meshStandardMaterial color="#999" metalness={0.5} roughness={0.5} envMapIntensity={2} />
-        <mesh ref={frame} raycast={() => null} scale={[0.9, 0.93, 0.9]} position={[0, 0, 0.2]}>
+    <>
+      <Spotlight />
+      <group {...props}>
+        <mesh
+          name={name}
+          onPointerOver={(e) => (e.stopPropagation(), hover(true))}
+          onPointerOut={() => hover(false)}
+          scale={[scaleX, ratio, 0.05]}
+          position={[0, ratio / 2, 0]}>
           <boxGeometry />
-          <meshBasicMaterial toneMapped={false} fog={false} />
+
+          {scaleX > 1 ? (
+            <>
+              <boxGeometry args={[0.94, 1, 1]} />
+            </>
+          ) : (
+            <>
+              <boxGeometry args={[1, 1, 1]} />
+            </>
+          )}
+
+          <meshStandardMaterial color="#999" metalness={0.5} roughness={0.5} envMapIntensity={2} />
+          <mesh ref={frame} raycast={() => null} scale={[0.9, 0.93, 0.9]} position={[0, 0, 0.2]}>
+            <boxGeometry />
+            <meshBasicMaterial toneMapped={false} fog={false} />
+          </mesh>
+          <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={url} />
         </mesh>
-        <Image raycast={() => null} ref={image} position={[0, 0, 0.7]} url={url} />
-      </mesh>
 
-      <spotLight
-        ref={light}
-        position={[0, ratio / 2 + 1, 1]}
-        angle={Math.PI / 4}
-        penumbra={0.2}
-        intensity={5}
-        distance={5}
-        decay={1}
-        castShadow
-        target={image.current}></spotLight>
-
-      <primitive object={nodes.Spotlight} position={[-4, 2.4, 10]} scale={[0.01, 0.01, 0.01]} />
-    </group>
+        <spotLight
+          ref={light}
+          position={[0, ratio / 2 + 1, 1]}
+          angle={Math.PI / 4}
+          penumbra={0.2}
+          intensity={5}
+          distance={5}
+          decay={1}
+          castShadow
+          target={image.current}
+        />
+      </group>
+    </>
   )
 }
