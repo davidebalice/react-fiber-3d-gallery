@@ -39,7 +39,7 @@ export const Walls = () => {
 
       {/* roof */}
       <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 3, 0]}>
-        <planeGeometry args={[11, 20]} />
+        <planeGeometry args={[12, 20]} />
         <meshStandardMaterial map={useLoader(THREE.TextureLoader, './assets/wall.jpg')} />
       </mesh>
     </>

@@ -30,7 +30,7 @@ body {
   top: 20px;
   left: 20px;
   width: 20%;
-  max-width: 170px;
+  max-width: 120px;
   pointer-events: auto;
 }
 
@@ -39,7 +39,7 @@ body {
   top: 20px;
   right: 20px;
   width: 20%;
-  max-width: 170px;
+  max-width: 70px;
   pointer-events: auto;
 }
 
@@ -77,4 +77,22 @@ body {
 .logoPreloader {
   width: 60px;
   position: absolute;
+}
+
+.footer {
+  position: fixed;
+  z-index: 1000;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  padding: 8px;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.footer a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  pointer-events: auto;
 }
