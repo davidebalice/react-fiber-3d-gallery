@@ -96,3 +96,34 @@ body {
   font-size: 14px;
   pointer-events: auto;
 }
+
+.zoomContainer {
+  position: fixed;
+  top: 150px;
+  right: 0px;
+  font-weight: bold;
+  width: 100px;
+  font-size: 14px;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  pointer-events: auto;
+  text-align: center;
+  height: 150px;
+  background: rgba(0, 0, 0, 0.5);
+  padding:18px 10px;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.zoomContainerButton {
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 30px;
+  line-height: 26px;
+  padding:10px;
+  margin-bottom:4px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.zoomContainerTitle{
+  margin-bottom:10px
+}

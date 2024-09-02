@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import axios from 'axios'
 import { easing } from 'maath'
 import { useEffect, useRef, useState } from 'react'
+import { isMobile } from 'react-device-detect'
 import * as THREE from 'three'
 import getUuid from 'uuid-by-string'
 import { useLocation, useRoute } from 'wouter'
@@ -18,6 +19,7 @@ export const Gallery = () => {
   const [controlsEnabled, setControlsEnabled] = useState(true)
   const [ratio, setRatio] = useState(1.61803398875)
   const getImage = (photo) => `${process.env.REACT_APP_BACKEND_URL}/api/images/thumb/${photo}`
+  const [zoom, setZoom] = useState(6)
 
   useEffect(() => {
     setLoading(true)
@@ -72,23 +74,31 @@ export const Gallery = () => {
   return (
     <>
       {loading && <Preloader />}
-      <Overlay />
-      <Canvas dpr={[1, 1.5]} camera={{ fov: 60, position: [0, 0, 10] }}>
+      <Overlay zoom={zoom} setZoom={setZoom} />
+      <Canvas dpr={[1, 1.2]} camera={{ fov: 60, position: [0, 0, 10] }} gl={{ antialias: !isMobile }}>
         <color attach="background" args={['#191920']} />
         <fog attach="fog" args={['#191920', 0, 15]} />
         <group position={[0, -0.5, 0]}>
-          <Frames images={images} ratio={ratio} setRatio={setRatio} lights={lights} setControlsEnabled={setControlsEnabled} controlsEnabled={controlsEnabled} />
+          <Frames
+            images={images}
+            ratio={ratio}
+            setRatio={setRatio}
+            lights={lights}
+            setControlsEnabled={setControlsEnabled}
+            controlsEnabled={controlsEnabled}
+            zoom={zoom}
+            setZoom={setZoom}
+          />
           <Walls />
         </group>
         <Environment preset="city" />
-        {controlsEnabled && <OrbitControls />}
+        {controlsEnabled && <OrbitControls enableZoom={false} />}
       </Canvas>
     </>
   )
 }
 
-function Frames({ images, ratio, lights, q = new THREE.Quaternion(), p = new THREE.Vector3(), controlsEnabled, setControlsEnabled }) {
-  const [zoom, setZoom] = useState(6)
+function Frames({ images, ratio, lights, zoom, setZoom, q = new THREE.Quaternion(), p = new THREE.Vector3(), controlsEnabled, setControlsEnabled }) {
   const ref = useRef()
   const clicked = useRef()
   const [, params] = useRoute('/item/:id')
@@ -96,20 +106,16 @@ function Frames({ images, ratio, lights, q = new THREE.Quaternion(), p = new THR
 
   const calculateZoom = () => {
     const { innerWidth } = window
-    if (innerWidth < 800) return 14
-    if (innerWidth < 1000) return 10
-    if (innerWidth < 1300) return 8
-    if (innerWidth < 1600) return 7
+    if (innerWidth < 800) return 16
+    if (innerWidth < 1000) return 15
+    if (innerWidth < 1300) return 10
+    if (innerWidth < 1600) return 8
     return 6
   }
 
   useEffect(() => {
     setZoom(calculateZoom())
   }, [window.innerWidth])
-
-  const handleZoomChange = (event) => {
-    setZoom(Number(event.target.value))
-  }
 
   useEffect(() => {
     clicked.current = ref.current.getObjectByName(params?.id)
@@ -126,10 +132,8 @@ function Frames({ images, ratio, lights, q = new THREE.Quaternion(), p = new THR
   })
 
   useFrame((state, dt) => {
-    // if (!controlsEnabled) {
     easing.damp3(state.camera.position, p, 0.5, dt)
     easing.dampQ(state.camera.quaternion, q, 0.5, dt)
-    // }
   })
 
   return (
