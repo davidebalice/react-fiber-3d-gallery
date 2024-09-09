@@ -109,7 +109,7 @@ body {
   text-align: center;
   height: 150px;
   background: rgba(0, 0, 0, 0.5);
-  padding:18px 10px;
+  padding: 18px 10px;
   border-top-left-radius: 8px;
   border-bottom-left-radius: 8px;
 }
@@ -119,11 +119,11 @@ body {
   cursor: pointer;
   font-size: 30px;
   line-height: 26px;
-  padding:10px;
-  margin-bottom:4px;
+  padding: 10px;
+  margin-bottom: 4px;
   background: rgba(0, 0, 0, 0.5);
 }
 
-.zoomContainerTitle{
-  margin-bottom:10px
+.zoomContainerTitle {
+  margin-bottom: 10px;
 }

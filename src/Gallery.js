@@ -1,4 +1,4 @@
-import { Environment, Image, OrbitControls, useCursor, useProgress } from '@react-three/drei'
+import { Environment, Image, useCursor, useProgress } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import axios from 'axios'
 import { easing } from 'maath'
@@ -16,7 +16,6 @@ export const Gallery = () => {
   const [lights, setLights] = useState(true)
   const [loading, setLoading] = useState(true)
   const [images, setImages] = useState([])
-  const [controlsEnabled, setControlsEnabled] = useState(true)
   const [ratio, setRatio] = useState(1.61803398875)
   const getImage = (photo) => `${process.env.REACT_APP_BACKEND_URL}/api/images/thumb/${photo}`
   const [zoom, setZoom] = useState(6)
@@ -84,21 +83,18 @@ export const Gallery = () => {
             ratio={ratio}
             setRatio={setRatio}
             lights={lights}
-            setControlsEnabled={setControlsEnabled}
-            controlsEnabled={controlsEnabled}
             zoom={zoom}
             setZoom={setZoom}
           />
           <Walls />
         </group>
         <Environment preset="city" />
-        {controlsEnabled && <OrbitControls enableZoom={false} />}
       </Canvas>
     </>
   )
 }
 
-function Frames({ images, ratio, lights, zoom, setZoom, q = new THREE.Quaternion(), p = new THREE.Vector3(), controlsEnabled, setControlsEnabled }) {
+function Frames({ images, ratio, lights, zoom, setZoom, q = new THREE.Quaternion(), p = new THREE.Vector3() }) {
   const ref = useRef()
   const clicked = useRef()
   const [, params] = useRoute('/item/:id')
@@ -123,11 +119,9 @@ function Frames({ images, ratio, lights, zoom, setZoom, q = new THREE.Quaternion
       clicked.current.parent.updateWorldMatrix(true, true)
       clicked.current.parent.localToWorld(p.set(0, ratio / 2, 2))
       clicked.current.parent.getWorldQuaternion(q)
-      setControlsEnabled(false)
     } else {
       p.set(0, 0.5, zoom)
       q.identity()
-      setControlsEnabled(true)
     }
   })
 
