@@ -17,7 +17,7 @@ export const Gallery = () => {
   const [loading, setLoading] = useState(true)
   const [images, setImages] = useState([])
   const [ratio, setRatio] = useState(1.61803398875)
-  const getImage = (photo) => `${process.env.REACT_APP_BACKEND_URL}/api/images/thumb/${photo}`
+  const getImage = (photo) => `${import.meta.env.VITE_BACKEND_URL}/api/images/thumb/${photo}`
   const [zoom, setZoom] = useState(6)
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export const Gallery = () => {
 
   const fetchImages = () => {
     axios
-      .get(`${process.env.REACT_APP_API_BASE_URL}/api/images/66cc3506cbd23d19d1fd4ed2?limit=8&page=1`, {
+      .get(`${import.meta.env.VITE_API_BASE_URL}/api/images/66cc3506cbd23d19d1fd4ed2?limit=8&page=1`, {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json'
