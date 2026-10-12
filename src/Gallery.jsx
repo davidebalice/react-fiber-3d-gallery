@@ -205,7 +205,7 @@ function Frame({ url, ratio, lights, setRatio, scaleX, c = new THREE.Color(), ..
             position={[0, ratio / 2 + 1, 1]}
             angle={Math.PI / 4}
             penumbra={0.2}
-            intensity={5}
+            intensity={5 * Math.PI}
             distance={5}
             decay={1}
             castShadow
